@@ -16,6 +16,10 @@ Just `DO utc.app` (located in the `bin` folder). This will instantiate a UTCDate
 
 Returns the current UTC time (as indicated by the system's clock).
 
+#### DefTimezone (Source AS String)
+
+Sets the source from timezone definition. `m.Source = "Web"` if loads always from TzURL; `= "Local"` if loads from local copy, when available; otherwise, from local copy if not older than 30 days (default), from TzURL in other cases.
+
 #### SetTimezone ([TzID AS String]) AS Boolean
 
 Sets the timezone. A timezone is identified by its IANA code (for instance, `"America/New_York"`, or `"Etc/GMT+3"`. This will be the default timezone. Sending no `m.TZID` will set the timezone to UTC. 
@@ -167,6 +171,10 @@ FOR m.Loop = 1 TO 12
 	m.Moment = GOMONTH(m.Moment, 1)
 ENDFOR
 ```
+
+## Code & Project
+
+The project depends on iCal4VFP that may be available or not when building. Make sure that a copy of the iCal4VFP library and Tokenizer class source code are visible to the project.
 
 ## Licensing
 

@@ -43,6 +43,7 @@ DEFINE CLASS UTCDatetime AS Custom
 
 	_MemberData =	'<VFPData>' + ;
 							'<memberdata name="current" type="property" display="Current"/>' + ;
+							'<memberdata name="deftimezone" type="method" display="DefTimezone"/>' + ;
 							'<memberdata name="getutcoffset" type="method" display="GetUTCOffset"/>' + ;
 							'<memberdata name="loadtimezone" type="method" display="LoadTimezone"/>' + ;
 							'<memberdata name="localtime" type="method" display="LocalTime"/>' + ;
@@ -61,6 +62,22 @@ DEFINE CLASS UTCDatetime AS Custom
 	FUNCTION Now () AS Datetime
 
 		RETURN This.iCal.UTCDatetime()
+
+	ENDFUNC
+
+	* defines the timezone source
+	FUNCTION DefTimezone (Source AS String)
+
+		DO CASE
+		CASE EMPTY(m.Source)
+			This.TzURL.SetCache(30)
+		CASE UPPER(m.Source) == "WEB"
+			This.TzURL.SetCache(0)
+		CASE UPPER(m.Source) == "LOCAL"
+			This.TzURL.SetCache(-1)
+		OTHERWISE
+			This.TzURL.SetCache(30)
+		ENDCASE
 
 	ENDFUNC
 
