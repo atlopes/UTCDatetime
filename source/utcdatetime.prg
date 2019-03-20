@@ -2,12 +2,15 @@
 *!*	|                                                                    |
 *!*	|    UTCDatetime                                                     |
 *!*	|                                                                    |
-*!*	|    Source and docs: https://bitbucket.org/atlopes/utc              |
-*!*	|                 or: https://github.com/atlopes/utc                 |
+*!*	|    Source and docs: https://github.com/atlopes/UTCDatetime         |
 *!*	|                                                                    |
 *!*	+--------------------------------------------------------------------+
 
+#DEFINE	SAFETHIS		ASSERT !USED("This") AND TYPE("This") == "O"
+
 LOCAL SearchOrder AS String
+
+* make sure components are searched in the app, first
 m.SearchOrder = SYS(2450)
 SYS(2450, 1)
 
@@ -15,6 +18,7 @@ DO tzurl.prg
 
 SYS(2450, VAL(m.SearchOrder))
 
+* if needed, remove a previous instance of UTC from _Screen
 TRY
 	_Screen.RemoveObject("UTC")
 CATCH
@@ -26,13 +30,17 @@ ENDTRY
 
 _Screen.AddObject("UTC", "UTCDatetime")
 
+* the extension is now ready to use
+
 DEFINE CLASS UTCDatetime AS Custom
 
 	ADD OBJECT Timezones AS Collection
 
-	HIDDEN iCal, TZURL, Timezone, TzDef, TZID
+	HIDDEN TZURL
+	HIDDEN Timezone
+	HIDDEN TzDef
+	HIDDEN TZID
 
-	iCal = .NULL.
 	TZUrl = .NULL.
 	Timezone = .NULL.
 	TzDef = .NULL.
@@ -43,6 +51,7 @@ DEFINE CLASS UTCDatetime AS Custom
 
 	_MemberData =	'<VFPData>' + ;
 							'<memberdata name="current" type="property" display="Current"/>' + ;
+							'<memberdata name="timezones" type="property" display="Timezones"/>' + ;
 							'<memberdata name="deftimezone" type="method" display="DefTimezone"/>' + ;
 							'<memberdata name="getutcoffset" type="method" display="GetUTCOffset"/>' + ;
 							'<memberdata name="loadtimezone" type="method" display="LoadTimezone"/>' + ;
@@ -54,14 +63,24 @@ DEFINE CLASS UTCDatetime AS Custom
 					'</VFPData>'
 
 	FUNCTION Init
-		This.iCal = CREATEOBJECT("iCalendar")
-		This.TZUrl = CREATEOBJECT("TZURL")
+
+		LOCAL Instantiated AS Boolean
+
+		TRY
+			This.TZUrl = CREATEOBJECT("TZURL")
+			m.Instantiated = .T.
+		CATCH
+			m.Instantiated = .F.
+		ENDTRY
+
+		RETURN m.Instantiated
+
 	ENDFUNC
 
 	* returns the current UTC time
 	FUNCTION Now () AS Datetime
 
-		RETURN This.iCal.UTCDatetime()
+		RETURN This.TZUrl.UTCDatetime()
 
 	ENDFUNC
 
@@ -146,6 +165,8 @@ DEFINE CLASS UTCDatetime AS Custom
 	* returns the local time given a UTC time (or Now(), if not given) for a timezone (or the current timezone, if not given)
 	FUNCTION LocalTime (UTC AS Datetime, TZID AS String) AS Datetime
 
+		SAFETHIS
+
 		LOCAL Def AS TzDef
 		LOCAL _UTC AS Datetime
 		LOCAL Result AS Datetime
@@ -179,6 +200,8 @@ DEFINE CLASS UTCDatetime AS Custom
 		LOCAL _LocalTime AS Datetime
 		LOCAL Result AS Datetime
 		LOCAL WArea AS Integer
+
+		SAFETHIS
 
 		m.WArea = SELECT()
 
@@ -226,6 +249,8 @@ DEFINE CLASS UTCDatetime AS Custom
 		LOCAL Result AS Integer
 		LOCAL WArea AS Integer
 
+		SAFETHIS
+
 		m.WArea = SELECT()
 
 		m.Def = This.GetTZDef(m.TZID)
@@ -248,6 +273,8 @@ DEFINE CLASS UTCDatetime AS Custom
 	ENDFUNC		
 
 	HIDDEN FUNCTION GetTZDef (TZID AS String) AS TzDef
+
+		SAFETHIS
 
 		LOCAL Def AS TzDef
 
