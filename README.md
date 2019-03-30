@@ -1,6 +1,6 @@
 # UTCDatetime
 
-A VFP extension to handle UTC dates and time, including historical points in time, and conversion from and to local time in any timezone.
+A VFP extension to handle UTC dates and time, including historical points in time, and conversion from and to local time in any time zone.
 
 It uses the iCal4VFP library and requires Web access to TzURL data.
 
@@ -18,37 +18,45 @@ Returns the current UTC time (as indicated by the system's clock).
 
 #### DefTimezone (Source AS String)
 
-Sets the source from timezone definition. `m.Source = "Web"` if loads always from TzURL; `= "Local"` if loads from local copy, when available; otherwise, from local copy if not older than 30 days (default), from TzURL in other cases.
+Sets the source from time zone definition. `m.Source = "Web"` loads always from TzURL; `= "Local"` loads from local copy, when available; otherwise, from local copy if not older than 30 days (default), from TzURL in other cases.
 
 #### SetTimezone ([TzID AS String]) AS Boolean
 
-Sets the timezone. A timezone is identified by its IANA code (for instance, `"America/New_York"`, or `"Etc/GMT+3"`. This will be the default timezone. Sending no `m.TZID` will set the timezone to UTC. 
+Sets the time zone. A time zone is identified by its IANA code (for instance, `"America/New_York"`, or `"Etc/GMT+3"`. This will be the default time zone. Sending no `m.TZID` will set the time zone to UTC. 
 
 #### LoadTimezone (TzID AS String) AS Boolean
 
-Loads a timezone definition. This will prefetch a definition and make it ready to be used when required.
+Loads a time zone definition. This will prefetch a definition and make it ready to be used when required.
 
 #### UTCTime ([LocalTime AS Datetime] [, TZID AS String]) AS Datetime
 
-Returns the UTC time for a given local time at a given timezone. `m.LocalTime` defaults to `DATETIME()`; if no `m.TZID` is sent, the default timezone will be used instead.
+Returns the UTC time for a given local time at a given time zone. `m.LocalTime` defaults to `DATETIME()`; if no `m.TZID` is sent, the default time zone will be used instead.
 
 #### LocalTime ([UTCTime AS Datetime] [, TZID AS String]) AS Datetime
 
-Returns the local time for a given UTC time at a given timezone. `m.UTCTime` defaults to `This.Now()`; if no `m.TZID` is sent, the default timezone will be used instead.
+Returns the local time for a given UTC time at a given time zone. `m.UTCTime` defaults to `This.Now()`; if no `m.TZID` is sent, the default time zone will be used instead.
 
-#### TTOC (LocalTime AS Datetime[, TZID AS String]) AS String
+#### TTOC (LocalTime AS Datetime[, TZIDorOffset AS StringOrInteger[, Options AS Integer]]) AS String
 
-Formats a local time according to ISO8601 `YYYY-MM-DDTHH:MM:SS±HH:MM`.  If no `m.TZID` is given, the default timezone will be used instead.
+Formats a local time according to ISO8601 `YYYY-MM-DDTHH:MM:SS±HH:MM`.  If no `m.TZIDorOffset` is given, the default time zone will be used instead.
+
+If `m.TZIDorOffset` is a TZID, the UTC offset will be calculated for the given date and time; otherwise, the offset will be used for the time format.
+
+Flags `m.Options` BITAND(1) = display the time name after the time formatted string (for instance, CET or WET); BITAND(2) = do not display time name when TzURL defines it as an offset (for instance, -03 instead of BRT). 
 
 #### GetUTCOffset ([LocalTime AS Datetime] [, TZID AS String]) AS Integer
 
-Returns the UTC offset observed at a given date in a given timezone. `m.UTCTime` defaults to `This.Now()`; if no `m.TZID` is sent, the default timezone is used instead.
+Returns the UTC offset observed at a given date in a given time zone. `m.UTCTime` defaults to `This.Now()`; if no `m.TZID` is sent, the default time zone is used instead.
 
 ### Properties
 
 #### Current = .F.
 
-Set it to `.T.` for recent, current, or future datetimes: the historical definitions of a timezone are ignored, and only the current one is used.
+Set it to `.T.` for recent, current, or future datetimes: the historical definitions of a time zone are ignored, and only the current one is used.
+
+#### TimeName = ""
+
+The time name for the last calculated time (for instance, "EDT" or "EST").
 
 ## Using
 
@@ -174,7 +182,7 @@ ENDFOR
 
 ## Code & Project
 
-The project depends on iCal4VFP that may be available or not when building. Make sure that a copy of the iCal4VFP library and Tokenizer class source code are visible to the project.
+The project depends on iCal4VFP that must be available when building. Make sure that a copy of the iCal4VFP library and Tokenizer class source code are visible to the project.
 
 ## Licensing
 

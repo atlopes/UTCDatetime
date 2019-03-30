@@ -48,9 +48,12 @@ DEFINE CLASS UTCDatetime AS Custom
 
 	* use the most recent daylight / standard time definition
 	Current = .F.
+	* time name acronym
+	TimeName = ""
 
 	_MemberData =	'<VFPData>' + ;
 							'<memberdata name="current" type="property" display="Current"/>' + ;
+							'<memberdata name="timename" type="property" display="TimeName"/>' + ;
 							'<memberdata name="timezones" type="property" display="Timezones"/>' + ;
 							'<memberdata name="deftimezone" type="method" display="DefTimezone"/>' + ;
 							'<memberdata name="getutcoffset" type="method" display="GetUTCOffset"/>' + ;
@@ -180,11 +183,14 @@ DEFINE CLASS UTCDatetime AS Custom
 		IF !ISNULL(m.Def)
 			IF This.Current
 				m.Result = m.Def.Minimal.ToLocalTime(m._UTC)
+				This.TimeName = m.Def.Minimal.TzName
 			ELSE
 				m.Result = m.Def.Full.ToLocalTime(m._UTC)
+				This.TimeName = m.Def.Full.TzName
 			ENDIF
 		ELSE
 			m.Result = m._UTC
+			This.TimeName = "UTC"
 		ENDIF
 
 		SELECT (m.WArea)
@@ -225,19 +231,36 @@ DEFINE CLASS UTCDatetime AS Custom
 	ENDFUNC
 
 	* formats a local time according to ISO8601 YYYY-MM-DDTHH:MM:SS±HH:MM
-	FUNCTION TTOC (LocalTime AS Datetime, TZID AS String) AS String
+	FUNCTION TTOC (LocalTime AS Datetime, TZIDorOffset AS StringOrInteger, Options AS Integer) AS String
 
 		LOCAL Offset AS Integer
 		LOCAL Sign AS Character
 		LOCAL Hours AS Integer
 		LOCAL Minutes AS Integer
+		LOCAL Result AS String
 
-		m.Offset = This.GetUTCOffset(m.LocalTime, m.TZID)
+		IF PCOUNT() < 3
+			m.Options = 0
+		ENDIF
+
+		IF VARTYPE(m.TZIDorOffset) == "N"
+			m.Offset = m.TZIDorOffset
+		ELSE
+			m.Offset = This.GetUTCOffset(m.LocalTime, m.TZIDorOffset)
+		ENDIF
 		m.Sign = IIF(m.Offset < 0, '-', '+')
 		m.Hours = INT(ABS(m.Offset) / 3600)
 		m.Minutes = INT((ABS(m.Offset) % 3600) / 60)
 
-		RETURN TEXTMERGE("<<TTOC(m.LocalTime, 3)>><<m.Sign>><<TRANSFORM(m.Hours, '@L 99')>>:<<TRANSFORM(m.Minutes, '@L 99')>>")
+		m.Result = TEXTMERGE("<<TTOC(m.LocalTime, 3)>><<m.Sign>><<TRANSFORM(m.Hours, '@L 99')>>:<<TRANSFORM(m.Minutes, '@L 99')>>")
+
+		IF BITAND(m.Options, 1) != 0
+			IF !EMPTY(This.TimeName) AND (BITAND(m.Options, 2) = 0 OR !LEFT(This.TimeName, 1) $ "+-")
+				m.Result = m.Result + " " + This.TimeName
+			ENDIF
+		ENDIF
+
+		RETURN m.Result
 
 	ENDFUNC		
 
@@ -259,11 +282,14 @@ DEFINE CLASS UTCDatetime AS Custom
 		IF !ISNULL(m.Def)
 			IF This.Current
 				m.Result = m.Def.Minimal.UTCOffset(m._LocalTime)
+				This.TimeName = m.Def.Minimal.TzName
 			ELSE
 				m.Result = m.Def.Full.UTCOffset(m._LocalTime)
+				This.TimeName = m.Def.Full.TzName
 			ENDIF
 		ELSE
 			m.Result = 0
+			This.TimeName = "UTC"
 		ENDIF
 
 		SELECT (m.WArea)
