@@ -44,6 +44,10 @@ If `m.TZIDorOffset` is a TZID, the UTC offset will be calculated for the given d
 
 Flags `m.Options` BITAND(1) = display the time name after the time formatted string (for instance, CET or WET); BITAND(2) = do not display time name when TzURL defines it as an offset (for instance, -03 instead of BRT). 
 
+#### CTOT (UTCTimeString AS String) AS Datetime
+
+Returns the UTC datetime corresponding to ISO8601 YYYY-MM-DDTHH:MM:SS±HH:MM. 
+
 #### GetUTCOffset ([LocalTime AS Datetime] [, TZID AS String]) AS Integer
 
 Returns the UTC offset observed at a given date in a given time zone. `m.UTCTime` defaults to `This.Now()`; if no `m.TZID` is sent, the default time zone is used instead.

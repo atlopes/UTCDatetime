@@ -62,6 +62,7 @@ DEFINE CLASS UTCDatetime AS Custom
 							'<memberdata name="now" type="method" display="Now"/>' + ;
 							'<memberdata name="settimezone" type="method" display="SetTimezone"/>' + ;
 							'<memberdata name="ttoc" type="method" display="TTOC"/>' + ;
+							'<memberdata name="ctot" type="method" display="CTOT"/>' + ;
 							'<memberdata name="utctime" type="method" display="UTCTime"/>' + ;
 					'</VFPData>'
 
@@ -297,6 +298,39 @@ DEFINE CLASS UTCDatetime AS Custom
 		RETURN m.Result
 
 	ENDFUNC		
+
+	* returns the UTC datetime corresponding to ISO8601 YYYY-MM-DDTHH:MM:SS±HH:MM
+	FUNCTION CTOT (UTCTimeString AS String) AS Datetime
+
+		LOCAL Dt AS Datetime
+		LOCAL Offset AS Integer
+
+		IF SUBSTR(m.UTCTimeString, 20, 1) $ "+-" AND CHRTRAN(SUBSTR(m.UTCTimeString, 21, 5), "123456789", "000000000") == "00:00"
+
+			TRY
+				m.Dt = EVALUATE("{^" + PADR(CHRTRAN(LEFT(m.UTCTimeString, 19), 'T', ' '), 19, "?") + "}")
+			CATCH
+				m.Dt = {:}
+			ENDTRY
+
+			IF !EMPTY(m.Dt)
+				m.Offset = VAL(SUBSTR(m.UTCTimeString, 20)) * 3600 + VAL(SUBSTR(m.UTCTimeString, 24)) * 60
+				IF BETWEEN(m.Offset, -15 * 3600, 16 * 3600)
+					m.Dt = m.Dt + m.Offset
+				ELSE
+					m.Dt = {:}
+				ENDIF
+			ENDIF
+
+		ELSE
+
+			m.Dt = {:}
+
+		ENDIF
+
+		RETURN m.Dt
+
+	ENDFUNC
 
 	HIDDEN FUNCTION GetTZDef (TZID AS String) AS TzDef
 
