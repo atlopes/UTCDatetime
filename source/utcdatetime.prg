@@ -2,11 +2,15 @@
 *!*	|                                                                    |
 *!*	|    UTCDatetime                                                     |
 *!*	|                                                                    |
-*!*	|    Source and docs: https://github.com/atlopes/UTCDatetime         |
-*!*	|                                                                    |
 *!*	+--------------------------------------------------------------------+
 
 #DEFINE	SAFETHIS		ASSERT !USED("This") AND TYPE("This") == "O"
+
+#DEFINE TTOC_FORMAT				0xC000
+#DEFINE TTOC_FORMAT_ISO8601	0x0000
+#DEFINE TTOC_FORMAT_RFC2822	0x4000
+#DEFINE TTOC_TZNAME				0x0001
+#DEFINE TTOC_TZNAME_ONLY_NAME	0x0002
 
 LOCAL SearchOrder AS String
 
@@ -231,7 +235,9 @@ DEFINE CLASS UTCDatetime AS Custom
 
 	ENDFUNC
 
-	* formats a local time according to ISO8601 YYYY-MM-DDTHH:MM:SS±HH:MM
+	* formats a local time according to
+	*  - ISO8601 (YYYY-MM-DDTHH:MM:SS±HH:MM) [BITAND(m.Options, 0xC000) = 0]
+	*  - RFC2822 (Wkd, DD Mon YYYY HH:MM:SS±HHMM) [BITAND(m.Options, 0xC000) = 0x4000]
 	FUNCTION TTOC (LocalTime AS Datetime, TZIDorOffset AS StringOrInteger, Options AS Integer) AS String
 
 		LOCAL Offset AS Integer
@@ -253,17 +259,35 @@ DEFINE CLASS UTCDatetime AS Custom
 		m.Hours = INT(ABS(m.Offset) / 3600)
 		m.Minutes = INT((ABS(m.Offset) % 3600) / 60)
 
-		m.Result = TEXTMERGE("<<TTOC(m.LocalTime, 3)>><<m.Sign>><<TRANSFORM(m.Hours, '@L 99')>>:<<TRANSFORM(m.Minutes, '@L 99')>>")
+		DO CASE
+		CASE BITAND(m.Options, TTOC_FORMAT) = TTOC_FORMAT_ISO8601
 
-		IF BITAND(m.Options, 1) != 0
-			IF !EMPTY(This.TimeName) AND (BITAND(m.Options, 2) = 0 OR !LEFT(This.TimeName, 1) $ "+-")
-				m.Result = m.Result + " " + This.TimeName
+			m.Result = TEXTMERGE("<<TTOC(m.LocalTime, 3)>><<m.Sign>><<TRANSFORM(m.Hours, '@L 99')>>:<<TRANSFORM(m.Minutes, '@L 99')>>")
+
+			IF BITAND(m.Options, TTOC_TZNAME) != 0
+				IF !EMPTY(This.TimeName) AND (BITAND(m.Options, TTOC_TZNAME_ONLY_NAME) = 0 OR !LEFT(This.TimeName, 1) $ "+-")
+					m.Result = m.Result + " " + This.TimeName
+				ENDIF
 			ENDIF
-		ENDIF
+
+		CASE BITAND(m.Options, TTOC_FORMAT) = TTOC_FORMAT_RFC2822
+
+			m.Result = GETWORDNUM("Mon Tue Wed Thu Fri Sat Sun", DOW(m.LocalTime, 2)) + "," + ;
+					" " + TRANSFORM(DAY(m.LocalTime), "@L 99") + ;
+					" " + GETWORDNUM("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", MONTH(m.LocalTime)) + ;
+					" " + TRANSFORM(YEAR(m.LocalTime)) + ;
+					" " + SUBSTR(TTOC(m.LocalTime, 3), 12, 8) + ;
+					" " + m.Sign + TRANSFORM(m.Hours, "@L 99") + TRANSFORM(m.Minutes, "@L 99")
+
+		OTHERWISE
+
+			m.Result = TRANSFORM(m.LocalTime)
+
+		ENDCASE
 
 		RETURN m.Result
 
-	ENDFUNC		
+	ENDFUNC
 
 	* returns the UTC offset observed at a given date in a given timezone
 	FUNCTION GetUTCOffset (LocalTime AS Datetime, TZID AS String) AS Integer
@@ -299,33 +323,89 @@ DEFINE CLASS UTCDatetime AS Custom
 
 	ENDFUNC		
 
-	* returns the UTC datetime corresponding to ISO8601 YYYY-MM-DDTHH:MM:SS±HH:MM
+	* returns the UTC datetime corresponding to
+	*  - ISO8601 YYYY-MM-DDTHH:MM:SS±HH:MM
+	*  - RFC2822 (Wkd, DD Mon YYYY HH:MM:SS±HHMM)
 	FUNCTION CTOT (UTCTimeString AS String) AS Datetime
 
 		LOCAL Dt AS Datetime
+		LOCAL DtYear AS String
+		LOCAL DtMon AS Integer
+		LOCAL DtDay AS String
+		LOCAL DtWkd AS String
+		LOCAL DTHours AS String
+		LOCAL DtOffset AS String
+		LOCAL DtOffsetH AS String
+		LOCAL DtOffsetM AS String
 		LOCAL Offset AS Integer
 
-		IF SUBSTR(m.UTCTimeString, 20, 1) $ "+-" AND CHRTRAN(SUBSTR(m.UTCTimeString, 21, 5), "123456789", "000000000") == "00:00"
+		DO CASE
+		* try ISO8601
+		CASE ISDIGIT(m.UTCTimeString) AND SUBSTR(m.UTCTimeString, 20, 1) $ "+-" AND CHRTRAN(SUBSTR(m.UTCTimeString, 21, 5), "123456789", "000000000") == "00:00"
 
 			TRY
-				m.Dt = EVALUATE("{^" + PADR(CHRTRAN(LEFT(m.UTCTimeString, 19), 'T', ' '), 19, "?") + "}")
+				m.Dt = EVALUATE("{^" + LEFT(m.UTCTimeString, 19) + "}")
+				m.DtOffsetH = SUBSTR(m.UTCTimeString, 20, 3)
+				m.DtOffsetM = SUBSTR(m.UTCTimeString, 24, 2)
 			CATCH
 				m.Dt = {:}
 			ENDTRY
 
-			IF !EMPTY(m.Dt)
-				m.Offset = VAL(SUBSTR(m.UTCTimeString, 20)) * 3600 + VAL(SUBSTR(m.UTCTimeString, 24)) * 60
-				IF BETWEEN(m.Offset, -15 * 3600, 16 * 3600)
-					m.Dt = m.Dt + m.Offset
-				ELSE
-					m.Dt = {:}
-				ENDIF
+		* try RFC2822
+		CASE ISALPHA(ALLTRIM(m.UTCTimeString))
+
+			m.DtWkd = GETWORDNUM(m.UTCTimeString, 1)
+			IF LEN(m.DtWkd) != 4
+				m.DtWkd = "-"
+			ENDIF
+			m.DtDay = GETWORDNUM(m.UTCTimeString, 2)
+			IF LEN(m.DtDay) = 1
+				m.DtDay = "0" + m.DtDay
+			ENDIF
+			m.DtMon = (AT(GETWORDNUM(m.UTCTimeString, 3), "JanFebMarAprMayJunJulAugSepOctNovDec") - 1) / 3
+			IF m.DtMon = INT(m.DtMon)
+				m.DtMon = INT(m.DtMon) + 1
+			ELSE
+				m.DtMon = 0
+			ENDIF
+			m.DtYear = GETWORDNUM(m.UTCTimeString, 4)
+			IF LEN(m.DtYear) = 2
+				m.DtYear = IIF(VAL(m.DtYear) >= 50, "19", "20") + m.DtYear
+			ENDIF
+			m.DTHours = GETWORDNUM(m.UTCTimeString, 5)
+			IF LEN(m.DTHours) = 5
+				m.DTHours = m.DTHours + ":00"
+			ENDIF
+			m.DtOffset = GETWORDNUM(m.UTCTimeString, 6)
+			IF LEN(m.DtOffset) = 5 AND LEFT(m.DtOffset, 1) $ "+-" AND CHRTRAN(SUBSTR(m.DtOffset, 2), "123456789", "000000000") == "0000"
+				m.DtOffsetH = LEFT(m.DtOffset, 3)
+				m.DtOffsetM = RIGHT(m.DtOffset, 2)
+			ELSE
+				STORE "" TO m.DtOffsetH, m.DtOffsetM
 			ENDIF
 
-		ELSE
+			TRY
+				m.Dt = EVALUATE(TEXTMERGE("{^<<m.DtYear>>-<<m.DtMon>>-<<m.DtDay>> <<m.DTHours>>}"))
+				IF DOW(m.Dt, 2) != ((AT(m.DtWkd, "Mon,Tue,Wed,Thu,Fri,Sat,Sun,") - 1) / 4) + 1
+					m.Dt = {:}
+				ENDIF
+			CATCH
+				m.Dt = {:}
+			ENDTRY
+
+		OTHERWISE
 
 			m.Dt = {:}
 
+		ENDCASE
+
+		IF !EMPTY(m.Dt)
+			m.Offset = VAL(m.DtOffsetH) * 3600 + VAL(m.DtOffsetM) * 60
+			IF BETWEEN(m.Offset, -15 * 3600, 16 * 3600) AND !EMPTY(m.DtOffsetH) AND !EMPTY(m.DtOffsetM)
+				m.Dt = m.Dt - m.Offset
+			ELSE
+				m.Dt = {:}
+			ENDIF
 		ENDIF
 
 		RETURN m.Dt
