@@ -38,15 +38,19 @@ Returns the local time for a given UTC time at a given time zone. `m.UTCTime` de
 
 #### TTOC (LocalTime AS Datetime[, TZIDorOffset AS StringOrInteger[, Options AS Integer]]) AS String
 
-Formats a local time according to ISO8601 `YYYY-MM-DDTHH:MM:SS±HH:MM`.  If no `m.TZIDorOffset` is given, the default time zone will be used instead.
+Formats a local time according to ISO8601 `YYYY-MM-DDTHH:MM:SS±HH:MM`, or RFC2822 `Wkd, DD Mon YYYY HH:MM:SS±HHMM`.
+
+If no `m.TZIDorOffset` is given, the default time zone will be used instead.
 
 If `m.TZIDorOffset` is a TZID, the UTC offset will be calculated for the given date and time; otherwise, the offset will be used for the time format.
 
-Flags `m.Options` BITAND(1) = display the time name after the time formatted string (for instance, CET or WET); BITAND(2) = do not display time name when TzURL defines it as an offset (for instance, -03 instead of BRT). 
+Flags `m.Options` BITAND(0x001) = display the time name after the time formatted string (for instance, CET or WET); BITAND(0x0002) = do not display time name when TzURL defines it as an offset (for instance, -03 instead of BRT).
+
+`BITAND(m.Options, 0xC000)` designates the output format: 0x0000 for ISO8601, 0x4000 for RFC2822. 
 
 #### CTOT (UTCTimeString AS String) AS Datetime
 
-Returns the UTC datetime corresponding to ISO8601 YYYY-MM-DDTHH:MM:SS±HH:MM. 
+Returns the UTC datetime corresponding to ISO8601 `YYYY-MM-DDTHH:MM:SS±HH:MM`, or RFC2822 `Wkd, DD Mon YYYY HH:MM:SS±HHMM`. 
 
 #### GetUTCOffset ([LocalTime AS Datetime] [, TZID AS String]) AS Integer
 
