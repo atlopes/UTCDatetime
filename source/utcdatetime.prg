@@ -61,6 +61,7 @@ DEFINE CLASS UTCDatetime AS Custom
 							'<memberdata name="timezones" type="property" display="Timezones"/>' + ;
 							'<memberdata name="deftimezone" type="method" display="DefTimezone"/>' + ;
 							'<memberdata name="getutcoffset" type="method" display="GetUTCOffset"/>' + ;
+							'<memberdata name="gettimedifference" type="method" display="GetTimeDifference"/>' + ;
 							'<memberdata name="loadtimezone" type="method" display="LoadTimezone"/>' + ;
 							'<memberdata name="localtime" type="method" display="LocalTime"/>' + ;
 							'<memberdata name="now" type="method" display="Now"/>' + ;
@@ -409,6 +410,13 @@ DEFINE CLASS UTCDatetime AS Custom
 		ENDIF
 
 		RETURN m.Dt
+
+	ENDFUNC
+
+	* get the time difference in seconds between two datetimes
+	FUNCTION GetTimeDifference (Time1 AS Datetime, TZID1 AS String, Time2 AS Datetime, TZID2 AS String) AS Number
+
+		RETURN This.UTCTime(m.Time1, m.TZID1) - This.UTCTime(m.Time2, m.TZID2)
 
 	ENDFUNC
 

@@ -54,7 +54,13 @@ Returns the UTC datetime corresponding to ISO8601 `YYYY-MM-DDTHH:MM:SS±HH:MM`, 
 
 #### GetUTCOffset ([LocalTime AS Datetime] [, TZID AS String]) AS Integer
 
-Returns the UTC offset observed at a given date in a given time zone. `m.UTCTime` defaults to `This.Now()`; if no `m.TZID` is sent, the default time zone is used instead.
+Returns the UTC offset observed at a given date in a given time zone. `m.LocalTime` defaults to `DATETIME()`; if no `m.TZID` is sent, the default time zone is used instead.
+
+#### GetTimeDifference (Time1 AS Datetime, TZID1 AS String, Time2 AS Datetime, TZID2 AS String) AS Number
+
+Returns the time difference in seconds between two datetimes that may be, or may not be in the same time zone. The result can be read as "how time2 compares to time1" (if greater than zero, time2 occurs after time1; if less than zero time2 occurs before time1; if equal to zero, both datetimes occur at the same time).
+
+To calculate a duration, set time1 as the beginning of the event, and time2 as the end.
 
 ### Properties
 
@@ -114,7 +120,7 @@ INSERT INTO Flights ;
 LOCAL Duration AS Integer
 
 SCAN
-	m.Duration = _Screen.Utc.UTCTime(Flights.Arrival, Flights.ArrTimezone) - _Screen.Utc.UTCTime(Flights.Departure, Flights.DepTimezone)
+	m.Duration = _Screen.Utc.GetTimeDifference(Flights.Arrival, Flights.ArrTimezone, Flights.Departure, Flights.DepTimezone)
 	? TEXTMERGE("Duration of Flight <<Flights.Airline>> <<Flights.Flight>> " + ;
 		"from <<Flights.FromAirport>> to <<Flights.ToAirport>>: " + ;
 		"<<TRANSFORM(INT(m.Duration / 3600), '@L 99')>>:<<TRANSFORM(INT((m.Duration % 3600) / 60), '@L 99')>>")
