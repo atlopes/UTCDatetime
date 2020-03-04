@@ -341,6 +341,11 @@ DEFINE CLASS UTCDatetime AS Custom
 		LOCAL Offset AS Integer
 
 		DO CASE
+
+		* mandatory string
+		CASE !(VARTYPE(m.UTCTimeString) == "C")
+			m.Dt = {:}
+
 		* try ISO8601
 		CASE ISDIGIT(m.UTCTimeString) AND SUBSTR(m.UTCTimeString, 20, 1) $ "+-" AND CHRTRAN(SUBSTR(m.UTCTimeString, 21, 5), "123456789", "000000000") == "00:00"
 
@@ -416,7 +421,7 @@ DEFINE CLASS UTCDatetime AS Custom
 	* get the time difference in seconds between two datetimes
 	FUNCTION GetTimeDifference (Time1 AS Datetime, TZID1 AS String, Time2 AS Datetime, TZID2 AS String) AS Number
 
-		RETURN This.UTCTime(m.Time1, m.TZID1) - This.UTCTime(m.Time2, m.TZID2)
+		RETURN This.UTCTime(m.Time2, m.TZID2) - This.UTCTime(m.Time1, m.TZID1)
 
 	ENDFUNC
 
@@ -426,7 +431,7 @@ DEFINE CLASS UTCDatetime AS Custom
 
 		LOCAL Def AS TzDef
 
-		IF !EMPTY(m.TZID)
+		IF !EMPTY(m.TZID) AND VARTYPE(m.TZID) == "C"
 			IF This.Timezones.GetKey(m.TZID) = 0
 				m.Def = CREATEOBJECT("TzDef")
 				m.Def.Full = This.TZURL.Full(m.TZID)

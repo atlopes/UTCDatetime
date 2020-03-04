@@ -120,7 +120,7 @@ INSERT INTO Flights ;
 LOCAL Duration AS Integer
 
 SCAN
-	m.Duration = _Screen.Utc.GetTimeDifference(Flights.Arrival, Flights.ArrTimezone, Flights.Departure, Flights.DepTimezone)
+	m.Duration = _Screen.Utc.GetTimeDifference(Flights.Departure, Flights.DepTimezone, Flights.Arrival, Flights.ArrTimezone)
 	? TEXTMERGE("Duration of Flight <<Flights.Airline>> <<Flights.Flight>> " + ;
 		"from <<Flights.FromAirport>> to <<Flights.ToAirport>>: " + ;
 		"<<TRANSFORM(INT(m.Duration / 3600), '@L 99')>>:<<TRANSFORM(INT((m.Duration % 3600) / 60), '@L 99')>>")
