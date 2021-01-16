@@ -344,7 +344,7 @@ DEFINE CLASS UTCDatetime AS Custom
 
 		* mandatory string
 		CASE !(VARTYPE(m.UTCTimeString) == "C")
-			m.Dt = {:}
+			m.Dt = {/:}
 
 		* try ISO8601
 		CASE ISDIGIT(m.UTCTimeString) AND SUBSTR(m.UTCTimeString, 20, 1) $ "+-" AND CHRTRAN(SUBSTR(m.UTCTimeString, 21, 5), "123456789", "000000000") == "00:00"
@@ -354,7 +354,7 @@ DEFINE CLASS UTCDatetime AS Custom
 				m.DtOffsetH = SUBSTR(m.UTCTimeString, 20, 3)
 				m.DtOffsetM = SUBSTR(m.UTCTimeString, 24, 2)
 			CATCH
-				m.Dt = {:}
+				m.Dt = {/:}
 			ENDTRY
 
 		* try RFC2822
@@ -393,15 +393,15 @@ DEFINE CLASS UTCDatetime AS Custom
 			TRY
 				m.Dt = EVALUATE(TEXTMERGE("{^<<m.DtYear>>-<<m.DtMon>>-<<m.DtDay>> <<m.DTHours>>}"))
 				IF DOW(m.Dt, 2) != ((AT(m.DtWkd, "Mon,Tue,Wed,Thu,Fri,Sat,Sun,") - 1) / 4) + 1
-					m.Dt = {:}
+					m.Dt = {/:}
 				ENDIF
 			CATCH
-				m.Dt = {:}
+				m.Dt = {/:}
 			ENDTRY
 
 		OTHERWISE
 
-			m.Dt = {:}
+			m.Dt = {/:}
 
 		ENDCASE
 
@@ -410,7 +410,7 @@ DEFINE CLASS UTCDatetime AS Custom
 			IF BETWEEN(m.Offset, -15 * 3600, 16 * 3600) AND !EMPTY(m.DtOffsetH) AND !EMPTY(m.DtOffsetM)
 				m.Dt = m.Dt - m.Offset
 			ELSE
-				m.Dt = {:}
+				m.Dt = {/:}
 			ENDIF
 		ENDIF
 

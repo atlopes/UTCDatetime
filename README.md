@@ -6,35 +6,49 @@ It uses the iCal4VFP library and requires Web access to TzURL data.
 
 ## Installation
 
-Just `DO utc.app` (located in the `bin` folder). This will instantiate a UTCDatetime object named `UTC` that is added to `_Screen`. The object will be always in scope and it can be referenced from anywhere (command window, programs, methods, menus, reports, SQL parameters, and so on).
+Just `DO utc.app` (located in the `bin` folder). This will instantiate a UTCDatetime object named `UTC` that is added to `_Screen`. The object will be always in scope and it can be referenced from anywhere (the command window, programs, methods, menus, reports, SQL parameters, and so on).
 
 ## PEM
 
 ### Methods
 
+----------
+
 #### Now() AS Datetime
 
 Returns the current UTC time (as indicated by the system's clock).
+
+----------
 
 #### DefTimezone (Source AS String)
 
 Sets the source from time zone definition. `m.Source = "Web"` loads always from TzURL; `= "Local"` loads from local copy, when available; otherwise, from local copy if not older than 30 days (default), from TzURL in other cases.
 
+----------
+
 #### SetTimezone ([TzID AS String]) AS Boolean
 
-Sets the time zone. A time zone is identified by its IANA code (for instance, `"America/New_York"`, or `"Etc/GMT+3"`. This will be the default time zone. Sending no `m.TZID` will set the time zone to UTC. 
+Sets the time zone. A time zone is identified by its IANA code (for instance, `"America/New_York"`, or `"Etc/GMT+3"`. This will be the default time zone. Passing no `m.TZID` will set the time zone to UTC. 
+
+----------
 
 #### LoadTimezone (TzID AS String) AS Boolean
 
-Loads a time zone definition. This will prefetch a definition and make it ready to be used when required.
+Loads a time zone definition. Prefetches a definition that will be ready to be used when required.
+
+----------
 
 #### UTCTime ([LocalTime AS Datetime] [, TZID AS String]) AS Datetime
 
-Returns the UTC time for a given local time at a given time zone. `m.LocalTime` defaults to `DATETIME()`; if no `m.TZID` is sent, the default time zone will be used instead.
+Returns the UTC time for a given local time at a given time zone. `m.LocalTime` defaults to `DATETIME()`; if no `m.TZID` is passed, the default time zone will be used instead.
+
+----------
 
 #### LocalTime ([UTCTime AS Datetime] [, TZID AS String]) AS Datetime
 
-Returns the local time for a given UTC time at a given time zone. `m.UTCTime` defaults to `This.Now()`; if no `m.TZID` is sent, the default time zone will be used instead.
+Returns the local time for a given UTC time at a given time zone. `m.UTCTime` defaults to `This.Now()`; if no `m.TZID` is passed, the default time zone will be used instead.
+
+----------
 
 #### TTOC (LocalTime AS Datetime[, TZIDorOffset AS StringOrInteger[, Options AS Integer]]) AS String
 
@@ -48,25 +62,34 @@ Flags `m.Options` BITAND(0x001) = display the time name after the time formatted
 
 `BITAND(m.Options, 0xC000)` designates the output format: 0x0000 for ISO8601, 0x4000 for RFC2822. 
 
+----------
+
 #### CTOT (UTCTimeString AS String) AS Datetime
 
 Returns the UTC datetime corresponding to ISO8601 `YYYY-MM-DDTHH:MM:SS±HH:MM`, or RFC2822 `Wkd, DD Mon YYYY HH:MM:SS±HHMM`. 
 
+----------
+
 #### GetUTCOffset ([LocalTime AS Datetime] [, TZID AS String]) AS Integer
 
-Returns the UTC offset observed at a given date in a given time zone. `m.LocalTime` defaults to `DATETIME()`; if no `m.TZID` is sent, the default time zone is used instead.
+Returns the UTC offset observed at a given date in a given time zone. `m.LocalTime` defaults to `DATETIME()`; if no `m.TZID` is passed, the default time zone is used instead.
+
+----------
 
 #### GetTimeDifference (Time1 AS Datetime, TZID1 AS String, Time2 AS Datetime, TZID2 AS String) AS Number
-
 Returns the time difference in seconds between two datetimes that may be, or may not be in the same time zone. The result can be read as "how time2 compares to time1" (if greater than zero, time2 occurs after time1; if less than zero time2 occurs before time1; if equal to zero, both datetimes occur at the same time).
 
-To calculate a duration, set time1 as the beginning of the event, and time2 as the end.
+To calculate a duration of an event, set time1 as the beginning of the event, and time2 as the end.
 
 ### Properties
+
+----------
 
 #### Current = .F.
 
 Set it to `.T.` for recent, current, or future datetimes: the historical definitions of a time zone are ignored, and only the current one is used.
+
+----------
 
 #### TimeName = ""
 
