@@ -181,10 +181,14 @@ DEFINE CLASS UTCDatetime AS Custom
 		LOCAL Result AS Datetime
 		LOCAL WArea AS Integer
 
+		IF ISNULL(m.UTC) OR (EMPTY(m.UTC) AND VARTYPE(m.UTC) == "T")
+			RETURN m.UTC
+		ENDIF
+
 		m.WArea = SELECT()
 
 		m.Def = This.GetTZDef(m.TZID)
-		m._UTC = EVL(NVL(m.UTC, {}), This.Now())
+		m._UTC = EVL(m.UTC, This.Now())
 
 		IF !ISNULL(m.Def)
 			IF This.Current
@@ -215,10 +219,14 @@ DEFINE CLASS UTCDatetime AS Custom
 
 		SAFETHIS
 
+		IF ISNULL(m.LocalTime) OR (EMPTY(m.LocalTime) AND VARTYPE(m.LocalTime) == "T")
+			RETURN m.LocalTime
+		ENDIF
+
 		m.WArea = SELECT()
 
 		m.Def = This.GetTZDef(m.TZID)
-		m._LocalTime = EVL(NVL(m.LocalTime, {}), DATETIME())
+		m._LocalTime = EVL(m.LocalTime, DATETIME())
 
 		IF !ISNULL(m.Def)
 			IF This.Current
@@ -303,7 +311,7 @@ DEFINE CLASS UTCDatetime AS Custom
 		m.WArea = SELECT()
 
 		m.Def = This.GetTZDef(m.TZID)
-		m._LocalTime = EVL(NVL(m.LocalTime, {}), DATETIME())
+		m._LocalTime = EVL(NVL(m.LocalTime, {/:}), DATETIME())
 
 		IF !ISNULL(m.Def)
 			IF This.Current
