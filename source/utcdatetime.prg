@@ -110,7 +110,7 @@ DEFINE CLASS UTCDatetime AS Custom
 	ENDFUNC
 
 	* sets the current timezone using the IANA timezone identifier (returns .F. on failure)
-	FUNCTION SetTimezone (TZID AS String) AS Boolean
+	FUNCTION SetTimezone (TZID AS String, Definition AS String) AS Boolean
 
 		LOCAL Def AS TzDef
 		LOCAL WArea AS Integer
@@ -123,9 +123,9 @@ DEFINE CLASS UTCDatetime AS Custom
 		ELSE
 			IF This.Timezones.GetKey(m.TZID) = 0
 				m.Def = CREATEOBJECT("TzDef")
-				m.Def.Full = This.TZURL.Full(m.TZID)
+				m.Def.Full = IIF(PCOUNT() == 1, This.TZURL.Full(m.TZID), This.TZURL.Full(m.TZID, m.Definition))
 				IF !ISNULL(m.Def.Full)
-					m.Def.Minimal = This.TZUrl.Minimal(m.TZID)
+					m.Def.Minimal = IIF(PCOUNT() == 1, This.TZUrl.Minimal(m.TZID), This.TZUrl.Minimal(m.TZID, m.Definition))
 					This.Timezones.Add(m.Def, m.TZID)
 					This.TZID = m.TZID
 					This.TzDef = m.Def
@@ -146,7 +146,7 @@ DEFINE CLASS UTCDatetime AS Custom
 	ENDFUNC
 
 	* loads a timezone definition using the IANA timezone identifier (returns .F. on failure)
-	FUNCTION LoadTimezone (TZID AS String) AS Boolean
+	FUNCTION LoadTimezone (TZID AS String, Definition AS String) AS Boolean
 
 		LOCAL Def AS TzDef
 		LOCAL WArea AS Integer
@@ -155,9 +155,9 @@ DEFINE CLASS UTCDatetime AS Custom
 
 		IF This.Timezones.GetKey(m.TZID) = 0
 			m.Def = CREATEOBJECT("TzDef")
-			m.Def.Full = This.TZURL.Full(m.TZID)
+			m.Def.Full = IIF(PCOUNT() == 1, This.TZURL.Full(m.TZID), This.TZURL.Full(m.TZID, m.Definition))
 			IF !ISNULL(m.Def.Full)
-				m.Def.Minimal = This.TZUrl.Minimal(m.TZID)
+				m.Def.Minimal = IIF(PCOUNT() == 1, This.TZUrl.Minimal(m.TZID), This.TZUrl.Minimal(m.TZID, m.Definition))
 				This.Timezones.Add(m.Def, m.TZID)
 			ELSE
 				SELECT (m.WArea)
