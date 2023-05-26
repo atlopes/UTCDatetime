@@ -260,9 +260,9 @@ DEFINE CLASS UTCDatetime AS Custom
 		ENDIF
 
 		IF VARTYPE(m.TZIDorOffset) == "N"
-			m.Offset = m.TZIDorOffset
+			m.Offset = INT(m.TZIDorOffset)
 		ELSE
-			m.Offset = This.GetUTCOffset(m.LocalTime, m.TZIDorOffset)
+			m.Offset = INT(This.GetUTCOffset(m.LocalTime, m.TZIDorOffset))
 		ENDIF
 		m.Sign = IIF(m.Offset < 0, '-', '+')
 		m.Hours = INT(ABS(m.Offset) / 3600)
@@ -284,7 +284,7 @@ DEFINE CLASS UTCDatetime AS Custom
 			m.Result = GETWORDNUM("Mon Tue Wed Thu Fri Sat Sun", DOW(m.LocalTime, 2)) + "," + ;
 					" " + TRANSFORM(DAY(m.LocalTime), "@L 99") + ;
 					" " + GETWORDNUM("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", MONTH(m.LocalTime)) + ;
-					" " + TRANSFORM(YEAR(m.LocalTime)) + ;
+					" " + STR(YEAR(m.LocalTime), 4) + ;
 					" " + SUBSTR(TTOC(m.LocalTime, 3), 12, 8) + ;
 					" " + m.Sign + TRANSFORM(m.Hours, "@L 99") + TRANSFORM(m.Minutes, "@L 99")
 
