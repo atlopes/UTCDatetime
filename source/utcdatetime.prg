@@ -122,7 +122,7 @@ DEFINE CLASS UTCDatetime AS Custom
 			This.TzDef = .NULL.
 		ELSE
 			IF This.Timezones.GetKey(m.TZID) = 0
-				m.Def = CREATEOBJECT("TzDef")
+				m.Def = This.NewTzDef()
 				m.Def.Full = IIF(PCOUNT() == 1, This.TZURL.Full(m.TZID), This.TZURL.Full(m.TZID, m.Definition))
 				IF !ISNULL(m.Def.Full)
 					m.Def.Minimal = IIF(PCOUNT() == 1, This.TZUrl.Minimal(m.TZID), This.TZUrl.Minimal(m.TZID, m.Definition))
@@ -154,7 +154,7 @@ DEFINE CLASS UTCDatetime AS Custom
 		m.WArea = SELECT()
 
 		IF This.Timezones.GetKey(m.TZID) = 0
-			m.Def = CREATEOBJECT("TzDef")
+			m.Def = This.NewTzDef()
 			m.Def.Full = IIF(PCOUNT() == 1, This.TZURL.Full(m.TZID), This.TZURL.Full(m.TZID, m.Definition))
 			IF !ISNULL(m.Def.Full)
 				m.Def.Minimal = IIF(PCOUNT() == 1, This.TZUrl.Minimal(m.TZID), This.TZUrl.Minimal(m.TZID, m.Definition))
@@ -441,7 +441,7 @@ DEFINE CLASS UTCDatetime AS Custom
 
 		IF !EMPTY(m.TZID) AND VARTYPE(m.TZID) == "C"
 			IF This.Timezones.GetKey(m.TZID) = 0
-				m.Def = CREATEOBJECT("TzDef")
+				m.Def = This.NewTzDef()
 				m.Def.Full = This.TZURL.Full(m.TZID)
 				IF !ISNULL(m.Def.Full)
 					m.Def.Minimal = This.TZUrl.Minimal(m.TZID)
@@ -460,11 +460,16 @@ DEFINE CLASS UTCDatetime AS Custom
 
 	ENDFUNC
 
-ENDDEFINE
+	HIDDEN FUNCTION NewTzDef () AS TzDef
 
-DEFINE CLASS TzDef AS Custom
+		LOCAL Def AS TzDef
 
-	Full = .NULL.
-	Minimal = .NULL.
+		m.Def = CREATEOBJECT("Empty")
+		ADDPROPERTY(m.Def, "Full", .NULL.)
+		ADDPROPERTY(m.Def, "Minimal", .NULL.)
+
+		RETURN m.Def
+
+	ENDFUNC
 
 ENDDEFINE
