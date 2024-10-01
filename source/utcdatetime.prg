@@ -59,15 +59,15 @@ DEFINE CLASS UTCDatetime AS Custom
 							'<memberdata name="current" type="property" display="Current"/>' + ;
 							'<memberdata name="timename" type="property" display="TimeName"/>' + ;
 							'<memberdata name="timezones" type="property" display="Timezones"/>' + ;
+							'<memberdata name="ctot" type="method" display="CTOT"/>' + ;
 							'<memberdata name="deftimezone" type="method" display="DefTimezone"/>' + ;
-							'<memberdata name="getutcoffset" type="method" display="GetUTCOffset"/>' + ;
 							'<memberdata name="gettimedifference" type="method" display="GetTimeDifference"/>' + ;
+							'<memberdata name="getutcoffset" type="method" display="GetUTCOffset"/>' + ;
 							'<memberdata name="loadtimezone" type="method" display="LoadTimezone"/>' + ;
 							'<memberdata name="localtime" type="method" display="LocalTime"/>' + ;
 							'<memberdata name="now" type="method" display="Now"/>' + ;
 							'<memberdata name="settimezone" type="method" display="SetTimezone"/>' + ;
 							'<memberdata name="ttoc" type="method" display="TTOC"/>' + ;
-							'<memberdata name="ctot" type="method" display="CTOT"/>' + ;
 							'<memberdata name="utctime" type="method" display="UTCTime"/>' + ;
 					'</VFPData>'
 
@@ -337,6 +337,7 @@ DEFINE CLASS UTCDatetime AS Custom
 	*  - RFC2822 (Wkd, DD Mon YYYY HH:MM:SS±HHMM)
 	FUNCTION CTOT (UTCTimeString AS String) AS Datetime
 
+		LOCAL _UTCTime AS String
 		LOCAL Dt AS Datetime
 		LOCAL DtYear AS String
 		LOCAL DtMon AS Integer
@@ -347,6 +348,7 @@ DEFINE CLASS UTCDatetime AS Custom
 		LOCAL DtOffsetH AS String
 		LOCAL DtOffsetM AS String
 		LOCAL Offset AS Integer
+		LOCAL Fraction AS Integer
 
 		DO CASE
 
@@ -355,15 +357,51 @@ DEFINE CLASS UTCDatetime AS Custom
 			m.Dt = {/:}
 
 		* try ISO8601
-		CASE ISDIGIT(m.UTCTimeString) AND SUBSTR(m.UTCTimeString, 20, 1) $ "+-" AND CHRTRAN(SUBSTR(m.UTCTimeString, 21, 5), "123456789", "000000000") == "00:00"
+		CASE ISDIGIT(m.UTCTimeString)
 
-			TRY
-				m.Dt = EVALUATE("{^" + LEFT(m.UTCTimeString, 19) + "}")
-				m.DtOffsetH = SUBSTR(m.UTCTimeString, 20, 3)
-				m.DtOffsetM = SUBSTR(m.UTCTimeString, 24, 2)
-			CATCH
+			* if present, remove milliseconds/fraction of seconds
+			m._UTCTime = m.UTCTimeString
+			IF SUBSTR(m._UTCTime, 20, 1) $ ",."
+				m._UTCTime = LEFT(m._UTCTime, 19) + SUBSTR(m._UTCTime, EVL(AT("+", m._UTCTime), EVL(AT("-", m._UTCTime, 3), EVL(AT("Z", m._UTCTime), LEN(m._UTCTime) + 1))))
+			ENDIF
+			
+			DO CASE
+
+			* no time unit separators
+			CASE ! "-" $ m._UTCTime
+
+				TRY
+					m.Dt = EVALUATE("{^" + TRANSFORM(LEFT(CHRTRAN(m._UTCTime, "T", ""), 19), "@R 9999-99-99 99:99:99") + "}")
+					STORE "0" TO m.DtOffsetH, m.DtOffsetM
+				CATCH
+					m.Dt = {/:}
+				ENDTRY
+				
+			* regular HH:MM offset
+			CASE SUBSTR(m._UTCTime, 20, 1) $ "+-" AND (CHRTRAN(SUBSTR(m._UTCTime, 21, 5), "123456789", "000000000") == "00:00" OR CHRTRAN(SUBSTR(m._UTCTime, 21, 2), "123456789", "000000000") == "00")
+
+				TRY
+					m.Dt = EVALUATE("{^" + LEFT(m._UTCTime, 19) + "}")
+					m.DtOffsetH = SUBSTR(m._UTCTime, 20, 3)
+					m.DtOffsetM = EVL(SUBSTR(m._UTCTime, 24, 2), "0")
+				CATCH
+					m.Dt = {/:}
+				ENDTRY
+
+			* ZULU time or no offset
+			CASE SUBSTR(m._UTCTime, 20, 1) == "Z" OR LEN(m._UTCTime) == 19
+
+				TRY
+					m.Dt = EVALUATE("{^" + LEFT(m._UTCTime, 19) + "}")
+					STORE "0" TO m.DtOffsetH, m.DtOffsetM
+				CATCH
+					m.Dt = {/:}
+				ENDTRY
+
+			* not supported or invalid
+			OTHERWISE
 				m.Dt = {/:}
-			ENDTRY
+			ENDCASE
 
 		* try RFC2822
 		CASE ISALPHA(ALLTRIM(m.UTCTimeString))
