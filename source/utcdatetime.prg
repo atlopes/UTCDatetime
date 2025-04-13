@@ -467,7 +467,7 @@ DEFINE CLASS UTCDatetime AS Custom
 	* get the time difference in seconds between two datetimes
 	FUNCTION GetTimeDifference (Time1 AS Datetime, TZID1 AS String, Time2 AS Datetime, TZID2 AS String) AS Number
 
-		RETURN This.UTCTime(m.Time2, m.TZID2) - This.UTCTime(m.Time1, m.TZID1)
+		RETURN FLOOR(This.UTCTime(m.Time2, m.TZID2) - This.UTCTime(m.Time1, m.TZID1))
 
 	ENDFUNC
 
