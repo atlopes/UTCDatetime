@@ -62,6 +62,7 @@ DEFINE CLASS UTCDatetime AS Custom
 							'<memberdata name="ctot" type="method" display="CTOT"/>' + ;
 							'<memberdata name="deftimezone" type="method" display="DefTimezone"/>' + ;
 							'<memberdata name="gettimedifference" type="method" display="GetTimeDifference"/>' + ;
+							'<memberdata name="gettimezoneid" type="method" display="GetTimezoneID"/>' + ;
 							'<memberdata name="getutcoffset" type="method" display="GetUTCOffset"/>' + ;
 							'<memberdata name="loadtimezone" type="method" display="LoadTimezone"/>' + ;
 							'<memberdata name="localtime" type="method" display="LocalTime"/>' + ;
@@ -142,6 +143,13 @@ DEFINE CLASS UTCDatetime AS Custom
 		SELECT (m.WArea)
 
 		RETURN .T.
+
+	ENDFUNC
+
+	* returns the current IANA timezone identifier
+	FUNCTION GetTimezoneID () AS String
+
+		RETURN This.TZID
 
 	ENDFUNC
 

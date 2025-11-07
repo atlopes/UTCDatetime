@@ -38,6 +38,11 @@ Loads a time zone definition. Prefetches a definition that will be ready to be u
 
 ----------
 
+#### GetTimezoneID () AS String
+
+Returns the current IANA timezone identifier.
+
+----------
 #### UTCTime ([LocalTime AS Datetime] [, TZID AS String]) AS Datetime
 
 Returns the UTC time for a given local time at a given time zone. `m.LocalTime` defaults to `DATETIME()`; if no `m.TZID` is passed, the default time zone will be used instead.
