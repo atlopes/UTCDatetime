@@ -11,6 +11,8 @@
 #DEFINE TTOC_FORMAT_RFC2822	0x4000
 #DEFINE TTOC_TZNAME				0x0001
 #DEFINE TTOC_TZNAME_ONLY_NAME	0x0002
+#DEFINE TTOC_AMBIGUITY_1		0x0004
+#DEFINE TTOC_AMBIGUITY_2		0x0008
 
 LOCAL SearchOrder AS String
 
@@ -52,10 +54,14 @@ DEFINE CLASS UTCDatetime AS Custom
 
 	* use the most recent daylight / standard time definition
 	Current = .F.
-	* time name acronym
+	* time name code
 	TimeName = ""
+	Ambiguous = .F.
+	AmbiguityResolution = 2
 
 	_MemberData =	'<VFPData>' + ;
+							'<memberdata name="ambiguityresolution" type="property" display="AmbiguityResolution"/>' + ;
+							'<memberdata name="ambiguous" type="property" display="Ambiguous"/>' + ;
 							'<memberdata name="current" type="property" display="Current"/>' + ;
 							'<memberdata name="timename" type="property" display="TimeName"/>' + ;
 							'<memberdata name="timezones" type="property" display="Timezones"/>' + ;
@@ -86,6 +92,10 @@ DEFINE CLASS UTCDatetime AS Custom
 		RETURN m.Instantiated
 
 	ENDFUNC
+
+	PROCEDURE AmbiguityResolution_assign (ARValue AS Integer)
+		This.AmbiguityResolution = IIF(VARTYPE(m.ARValue) != "N" OR m.ARValue != 1, 2, 1)
+	ENDPROC
 
 	* returns the current UTC time
 	FUNCTION Now () AS Datetime
@@ -189,6 +199,8 @@ DEFINE CLASS UTCDatetime AS Custom
 		LOCAL Result AS Datetime
 		LOCAL WArea AS Integer
 
+		This.Ambiguous = .F.
+
 		IF ISNULL(m.UTC) OR (EMPTY(m.UTC) AND VARTYPE(m.UTC) == "T")
 			RETURN m.UTC
 		ENDIF
@@ -218,7 +230,7 @@ DEFINE CLASS UTCDatetime AS Custom
 	ENDFUNC
 
 	* returns the UTC time given a local time (or DATETIME(), if not given) for a timezone (or the current timezone, if not given)
-	FUNCTION UTCTime (LocalTime AS Datetime, TZID AS String) AS Datetime
+	FUNCTION UTCTime (LocalTime AS Datetime, TZID AS String, AmbiguityResolution AS Integer) AS Datetime
 
 		LOCAL Def AS TzDef
 		LOCAL _LocalTime AS Datetime
@@ -226,6 +238,8 @@ DEFINE CLASS UTCDatetime AS Custom
 		LOCAL WArea AS Integer
 
 		SAFETHIS
+
+		This.Ambiguous = .F.
 
 		IF ISNULL(m.LocalTime) OR (EMPTY(m.LocalTime) AND VARTYPE(m.LocalTime) == "T")
 			RETURN m.LocalTime
@@ -238,9 +252,21 @@ DEFINE CLASS UTCDatetime AS Custom
 
 		IF !ISNULL(m.Def)
 			IF This.Current
-				m.Result = m.Def.Minimal.ToUTC(m._LocalTime)
+				m.Def.Minimal.AmbiguityResolution = This.AmbiguityResolution
+				IF PCOUNT() <= 2
+					m.Result = m.Def.Minimal.ToUTC(m._LocalTime)
+				ELSE
+					m.Result = m.Def.Minimal.ToUTC(m._LocalTime, m.AmbiguityResolution)
+				ENDIF
+				This.Ambiguous = m.Def.Minimal.Ambiguous 
 			ELSE
-				m.Result = m.Def.Full.ToUTC(m._LocalTime)
+				m.Def.Full.AmbiguityResolution = This.AmbiguityResolution
+				IF PCOUNT() <= 2
+					m.Result = m.Def.Full.ToUTC(m._LocalTime)
+				ELSE
+					m.Result = m.Def.Full.ToUTC(m._LocalTime, m.AmbiguityResolution)
+				ENDIF
+				This.Ambiguous = m.Def.Full.Ambiguous 
 			ENDIF
 		ELSE
 			m.Result = m._LocalTime
@@ -270,7 +296,11 @@ DEFINE CLASS UTCDatetime AS Custom
 		IF VARTYPE(m.TZIDorOffset) == "N"
 			m.Offset = INT(m.TZIDorOffset)
 		ELSE
-			m.Offset = INT(This.GetUTCOffset(m.LocalTime, m.TZIDorOffset))
+			IF BITAND(m.Options, BITOR(TTOC_AMBIGUITY_1, TTOC_AMBIGUITY_2)) != 0
+				m.Offset = INT(This.GetUTCOffset(m.LocalTime, m.TZIDorOffset, IIF(BITAND(m.Options, TTOC_AMBIGUITY_1) != 0, 1, 2)))
+			ELSE
+				m.Offset = INT(This.GetUTCOffset(m.LocalTime, m.TZIDorOffset))
+			ENDIF
 		ENDIF
 		m.Sign = IIF(m.Offset < 0, '-', '+')
 		m.Hours = INT(ABS(m.Offset) / 3600)
@@ -307,7 +337,7 @@ DEFINE CLASS UTCDatetime AS Custom
 	ENDFUNC
 
 	* returns the UTC offset observed at a given date in a given timezone
-	FUNCTION GetUTCOffset (LocalTime AS Datetime, TZID AS String) AS Integer
+	FUNCTION GetUTCOffset (LocalTime AS Datetime, TZID AS String, AmbiguityResolution AS Integer) AS Integer
 
 		LOCAL Def AS TzDef
 		LOCAL _LocalTime AS Datetime
@@ -321,12 +351,26 @@ DEFINE CLASS UTCDatetime AS Custom
 		m.Def = This.GetTZDef(m.TZID)
 		m._LocalTime = EVL(NVL(m.LocalTime, {/:}), DATETIME())
 
+		This.Ambiguous = .F.
+
 		IF !ISNULL(m.Def)
 			IF This.Current
-				m.Result = m.Def.Minimal.UTCOffset(m._LocalTime)
+				m.Def.Minimal.AmbiguityResolution = This.AmbiguityResolution
+				IF PCOUNT() <= 2
+					m.Result = m.Def.Minimal.UTCOffset(m._LocalTime)
+				ELSE
+					m.Result = m.Def.Minimal.UTCOffset(m._LocalTime, m.AmbiguityResolution)
+				ENDIF
+				This.Ambiguous = m.Def.Minimal.Ambiguous
 				This.TimeName = m.Def.Minimal.TzName
 			ELSE
-				m.Result = m.Def.Full.UTCOffset(m._LocalTime)
+				m.Def.Full.AmbiguityResolution = This.AmbiguityResolution
+				IF PCOUNT() <= 2
+					m.Result = m.Def.Full.UTCOffset(m._LocalTime)
+				ELSE
+					m.Result = m.Def.Full.UTCOffset(m._LocalTime, m.AmbiguityResolution)
+				ENDIF
+				This.Ambiguous = m.Def.Full.Ambiguous
 				This.TimeName = m.Def.Full.TzName
 			ENDIF
 		ELSE
@@ -473,9 +517,14 @@ DEFINE CLASS UTCDatetime AS Custom
 	ENDFUNC
 
 	* get the time difference in seconds between two datetimes
-	FUNCTION GetTimeDifference (Time1 AS Datetime, TZID1 AS String, Time2 AS Datetime, TZID2 AS String) AS Number
+	FUNCTION GetTimeDifference (Time1 AS Datetime, TZID1 AS String, Time2 AS Datetime, TZID2 AS String, Ambiguity1 AS Integer, Ambiguity2 AS Integer) AS Number
 
-		RETURN FLOOR(This.UTCTime(m.Time2, m.TZID2) - This.UTCTime(m.Time1, m.TZID1))
+		LOCAL UTC1 AS Datetime, UTC2 AS Datetime
+
+		m.UTC1 = IIF(PCOUNT() >= 5, This.UTCTime(m.Time1, m.TZID1, m.Ambiguity1), This.UTCTime(m.Time1, m.TZID1))
+		m.UTC2 = IIF(PCOUNT() >= 6, This.UTCTime(m.Time2, m.TZID2, m.Ambiguity2), This.UTCTime(m.Time2, m.TZID2))
+
+		RETURN FLOOR(m.UTC2- m.UTC1)
 
 	ENDFUNC
 

@@ -43,7 +43,7 @@ Loads a time zone definition. Prefetches a definition that will be ready to be u
 Returns the current IANA timezone identifier.
 
 ----------
-#### UTCTime ([LocalTime AS Datetime] [, TZID AS String]) AS Datetime
+#### UTCTime ([LocalTime AS Datetime] [, TZID AS String] [, AmbiguityResolution AS Integer]) AS Datetime
 
 Returns the UTC time for a given local time at a given time zone. `m.LocalTime` defaults to `DATETIME()`; if no `m.TZID` is passed, the default time zone will be used instead.
 
@@ -65,6 +65,8 @@ If `m.TZIDorOffset` is a TZID, the UTC offset will be calculated for the given d
 
 Flags `m.Options` BITAND(0x001) = display the time name after the time formatted string (for instance, CET or WET); BITAND(0x0002) = do not display time name when TzURL defines it as an offset (for instance, -03 instead of BRT).
 
+`BITAND(m.Options, 0x0004)` is equivalent to `AmbiguityResolution = 1`, and `BITAND(m.Options, 0x0008)` to `AmbiguityResolution = 2`.
+
 `BITAND(m.Options, 0xC000)` designates the output format: 0x0000 for ISO8601, 0x4000 for RFC2822. 
 
 ----------
@@ -75,18 +77,30 @@ Returns the UTC datetime corresponding to ISO8601 `YYYY-MM-DDTHH:MM:SS±HH:MM`, 
 
 ----------
 
-#### GetUTCOffset ([LocalTime AS Datetime] [, TZID AS String]) AS Integer
+#### GetUTCOffset ([LocalTime AS Datetime] [, TZID AS String] [, AmbiguityResolution AS Integer]) AS Integer
 
 Returns the UTC offset observed at a given date in a given time zone. `m.LocalTime` defaults to `DATETIME()`; if no `m.TZID` is passed, the default time zone is used instead.
 
 ----------
 
-#### GetTimeDifference (Time1 AS Datetime, TZID1 AS String, Time2 AS Datetime, TZID2 AS String) AS Number
+#### GetTimeDifference (Time1 AS Datetime, TZID1 AS String, Time2 AS Datetime, TZID2 AS String [, Ambiguity1 AS Integer [, Ambiguity2 AS Integer]]) AS Number
 Returns the time difference in seconds between two datetimes that may be, or may not be in the same time zone. The result can be read as "how time2 compares to time1" (if greater than zero, time2 occurs after time1; if less than zero time2 occurs before time1; if equal to zero, both datetimes occur at the same time).
 
 To calculate a duration of an event, set time1 as the beginning of the event, and time2 as the end.
 
 ### Properties
+
+----------
+
+#### AmbiguityResolution = 2
+
+Indicates which pass is used during the process of transforming an ambiguous local time into a UTC: 1, for the first pass; 2, for the second. May be overriden by additional parameters in relevent methods.
+
+----------
+
+#### Ambiguous = .F.
+
+Indicates if a local time may result in different UTC times, due to an offset adjustement that sets back the local time.
 
 ----------
 
