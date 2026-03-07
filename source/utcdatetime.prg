@@ -67,6 +67,7 @@ DEFINE CLASS UTCDatetime AS Custom
 							'<memberdata name="timezones" type="property" display="Timezones"/>' + ;
 							'<memberdata name="ctot" type="method" display="CTOT"/>' + ;
 							'<memberdata name="deftimezone" type="method" display="DefTimezone"/>' + ;
+							'<memberdata name="getlocaltimeoffset" type="method" display="GetLocalTimeOffset"/>' + ;
 							'<memberdata name="gettimedifference" type="method" display="GetTimeDifference"/>' + ;
 							'<memberdata name="gettimezoneid" type="method" display="GetTimezoneID"/>' + ;
 							'<memberdata name="getutcoffset" type="method" display="GetUTCOffset"/>' + ;
@@ -376,6 +377,37 @@ DEFINE CLASS UTCDatetime AS Custom
 		ELSE
 			m.Result = 0
 			This.TimeName = "UTC"
+		ENDIF
+
+		SELECT (m.WArea)
+
+		RETURN m.Result
+
+	ENDFUNC		
+
+	* returns the offset observed in a given timezone at a given UTC
+	FUNCTION GetLocalTimeOffset (UTC AS Datetime, TZID AS String) AS Integer
+
+		LOCAL Def AS TzDef
+		LOCAL _UTC AS Datetime
+		LOCAL Result AS Integer
+		LOCAL WArea AS Integer
+
+		SAFETHIS
+
+		m.WArea = SELECT()
+
+		m.Def = This.GetTZDef(m.TZID)
+		m._UTC = EVL(NVL(m.UTC, {/:}), This.Now())
+
+		IF ! ISNULL(m.Def)
+			IF This.Current
+				m.Result = m.Def.Minimal.ToLocalTime(m._UTC) - m._UTC
+			ELSE
+				m.Result = m.Def.Full.ToLocalTime(m._UTC) - m._UTC
+			ENDIF
+		ELSE
+			m.Result = 0
 		ENDIF
 
 		SELECT (m.WArea)

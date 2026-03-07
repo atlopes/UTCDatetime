@@ -83,6 +83,12 @@ Returns the UTC offset observed at a given date in a given time zone. `m.LocalTi
 
 ----------
 
+#### GetLocalOffset ([UTC AS Datetime] [, TZID AS String]) AS Integer
+
+Returns the offset observed at a given UTC date in a given time zone. `m.UTC` defaults to `.Now()`; if no `m.TZID` is passed, the default time zone is used instead.
+
+----------
+
 #### GetTimeDifference (Time1 AS Datetime, TZID1 AS String, Time2 AS Datetime, TZID2 AS String [, Ambiguity1 AS Integer [, Ambiguity2 AS Integer]]) AS Number
 Returns the time difference in seconds between two datetimes that may be, or may not be in the same time zone. The result can be read as "how time2 compares to time1" (if greater than zero, time2 occurs after time1; if less than zero time2 occurs before time1; if equal to zero, both datetimes occur at the same time).
 
