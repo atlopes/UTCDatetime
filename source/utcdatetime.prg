@@ -58,11 +58,15 @@ DEFINE CLASS UTCDatetime AS Custom
 	TimeName = ""
 	Ambiguous = .F.
 	AmbiguityResolution = 2
+	Optimization = .T.
+	Optimized = .F.
 
 	_MemberData =	'<VFPData>' + ;
 							'<memberdata name="ambiguityresolution" type="property" display="AmbiguityResolution"/>' + ;
 							'<memberdata name="ambiguous" type="property" display="Ambiguous"/>' + ;
 							'<memberdata name="current" type="property" display="Current"/>' + ;
+							'<memberdata name="optimization" type="property" display="Optimization"/>' + ;
+							'<memberdata name="optimized" type="property" display="Optimized"/>' + ;
 							'<memberdata name="timename" type="property" display="TimeName"/>' + ;
 							'<memberdata name="timezones" type="property" display="Timezones"/>' + ;
 							'<memberdata name="ctot" type="method" display="CTOT"/>' + ;
@@ -213,15 +217,20 @@ DEFINE CLASS UTCDatetime AS Custom
 
 		IF !ISNULL(m.Def)
 			IF This.Current
+				m.Def.Minimal.Optimization = This.Optimization
 				m.Result = m.Def.Minimal.ToLocalTime(m._UTC)
 				This.TimeName = m.Def.Minimal.TzName
+				This.Optimized = m.Def.Minimal.Optimized
 			ELSE
+				m.Def.Full.Optimization = This.Optimization
 				m.Result = m.Def.Full.ToLocalTime(m._UTC)
 				This.TimeName = m.Def.Full.TzName
+				This.Optimized = m.Def.Full.Optimized
 			ENDIF
 		ELSE
 			m.Result = m._UTC
 			This.TimeName = "UTC"
+			This.Optimized = .F.
 		ENDIF
 
 		SELECT (m.WArea)
@@ -241,6 +250,7 @@ DEFINE CLASS UTCDatetime AS Custom
 		SAFETHIS
 
 		This.Ambiguous = .F.
+		This.Optimized = .F.
 
 		IF ISNULL(m.LocalTime) OR (EMPTY(m.LocalTime) AND VARTYPE(m.LocalTime) == "T")
 			RETURN m.LocalTime
@@ -253,14 +263,17 @@ DEFINE CLASS UTCDatetime AS Custom
 
 		IF !ISNULL(m.Def)
 			IF This.Current
+				m.Def.Minimal.Optimization = This.Optimization
 				m.Def.Minimal.AmbiguityResolution = This.AmbiguityResolution
 				IF PCOUNT() <= 2
 					m.Result = m.Def.Minimal.ToUTC(m._LocalTime)
 				ELSE
 					m.Result = m.Def.Minimal.ToUTC(m._LocalTime, m.AmbiguityResolution)
 				ENDIF
-				This.Ambiguous = m.Def.Minimal.Ambiguous 
+				This.Ambiguous = m.Def.Minimal.Ambiguous
+				This.Optimized = m.Def.Minimal.Optimized
 			ELSE
+				m.Def.Full.Optimization = This.Optimization
 				m.Def.Full.AmbiguityResolution = This.AmbiguityResolution
 				IF PCOUNT() <= 2
 					m.Result = m.Def.Full.ToUTC(m._LocalTime)
@@ -268,6 +281,7 @@ DEFINE CLASS UTCDatetime AS Custom
 					m.Result = m.Def.Full.ToUTC(m._LocalTime, m.AmbiguityResolution)
 				ENDIF
 				This.Ambiguous = m.Def.Full.Ambiguous 
+				This.Optimized = m.Def.Full.Optimized
 			ENDIF
 		ELSE
 			m.Result = m._LocalTime
@@ -356,6 +370,7 @@ DEFINE CLASS UTCDatetime AS Custom
 
 		IF !ISNULL(m.Def)
 			IF This.Current
+				m.Def.Minimal.Optimization = This.Optimization
 				m.Def.Minimal.AmbiguityResolution = This.AmbiguityResolution
 				IF PCOUNT() <= 2
 					m.Result = m.Def.Minimal.UTCOffset(m._LocalTime)
@@ -365,6 +380,7 @@ DEFINE CLASS UTCDatetime AS Custom
 				This.Ambiguous = m.Def.Minimal.Ambiguous
 				This.TimeName = m.Def.Minimal.TzName
 			ELSE
+				m.Def.Full.Optimization = This.Optimization
 				m.Def.Full.AmbiguityResolution = This.AmbiguityResolution
 				IF PCOUNT() <= 2
 					m.Result = m.Def.Full.UTCOffset(m._LocalTime)
@@ -402,8 +418,10 @@ DEFINE CLASS UTCDatetime AS Custom
 
 		IF ! ISNULL(m.Def)
 			IF This.Current
+				m.Def.Minimal.Optimization = This.Optimization
 				m.Result = m.Def.Minimal.ToLocalTime(m._UTC) - m._UTC
 			ELSE
+				m.Def.Full.Optimization = This.Optimization
 				m.Result = m.Def.Full.ToLocalTime(m._UTC) - m._UTC
 			ENDIF
 		ELSE

@@ -116,6 +116,18 @@ Set it to `.T.` for recent, current, or future datetimes: the historical definit
 
 ----------
 
+#### Optimization = .T.
+
+Do not recalculate the UTC offset for a date that falls within the same time period (standard time or daylight saving time) as the last calculation. This can significantly improve the class's performance when the calculation involves a set of dates that are close together.
+
+----------
+
+#### Optimized = .F.
+
+`.T.` if the calculation of the UTC offset used the previous calculated offset, `.F.` otherwise.
+
+----------
+
 #### TimeName = ""
 
 The time name for the last calculated time (for instance, "EDT" or "EST").
